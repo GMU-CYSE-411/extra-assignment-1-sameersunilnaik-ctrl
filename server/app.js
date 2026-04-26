@@ -145,7 +145,7 @@ async function createApp() {
     response.json({ ok: true });
   });
 
-  app.get("/api/notes", requireAdmin, async (request, response) => {
+  app.get("/api/notes", requireAuth, async (request, response) => {
   const search = String(request.query.search || "");
   const requestedOwnerId = Number(request.query.ownerId || request.currentUser.id);
 
@@ -194,8 +194,12 @@ async function createApp() {
   });
 
   app.get("/api/settings", requireAuth, async (request, response) => {
-    const userId = Number(request.query.userId || request.currentUser.id);
+    const requestedUserId = Number(request.query.userId || request.currentUser.id);
 
+const userId =
+  request.currentUser.role === "admin"
+    ? requestedUserId
+    : request.currentUser.id;
     const settings = await db.get(
       `
         SELECT
@@ -247,7 +251,7 @@ async function createApp() {
     });
   });
 
-  app.get("/api/admin/users", requireAuth, async (_request, response) => {
+  app.get("/api/admin/users", requireAdmin, async (_request, response) => {
     const users = await db.all(`
       SELECT
         users.id,
