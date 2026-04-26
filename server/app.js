@@ -73,6 +73,14 @@ async function createApp() {
 
     next();
   }
+  function requireAdmin(request, response, next) {
+  if (!request.currentUser || request.currentUser.role !== "admin") {
+    response.status(403).json({ error: "Admin access required." });
+    return;
+  }
+
+  next();
+}
 
   app.get("/", (_request, response) => sendPublicFile(response, "index.html"));
   app.get("/login", (_request, response) => sendPublicFile(response, "login.html"));
@@ -137,11 +145,17 @@ async function createApp() {
     response.json({ ok: true });
   });
 
-  app.get("/api/notes", requireAuth, async (request, response) => {
-    const ownerId = request.query.ownerId || request.currentUser.id;
-    const search = request.query.search || "";
+  app.get("/api/notes", requireAdmin, async (request, response) => {
+  const search = String(request.query.search || "");
+  const requestedOwnerId = Number(request.query.ownerId || request.currentUser.id);
 
-    const notes = await db.all(`
+  const ownerId =
+    request.currentUser.role === "admin"
+      ? requestedOwnerId
+      : request.currentUser.id;
+
+  const notes = await db.all(
+    `
       SELECT
         notes.id,
         notes.owner_id AS ownerId,
@@ -152,16 +166,18 @@ async function createApp() {
         notes.created_at AS createdAt
       FROM notes
       JOIN users ON users.id = notes.owner_id
-      WHERE notes.owner_id = ${ownerId}
-        AND (notes.title LIKE '%${search}%' OR notes.body LIKE '%${search}%')
+      WHERE notes.owner_id = ?
+        AND (notes.title LIKE ? OR notes.body LIKE ?)
       ORDER BY notes.pinned DESC, notes.id DESC
-    `);
+    `,
+    [ownerId, `%${search}%`, `%${search}%`]
+  );
 
-    response.json({ notes });
-  });
+  response.json({ notes });
+});
 
   app.post("/api/notes", requireAuth, async (request, response) => {
-    const ownerId = Number(request.body.ownerId || request.currentUser.id);
+    const ownerId = request.currentUser.id;
     const title = String(request.body.title || "");
     const body = String(request.body.body || "");
     const pinned = request.body.pinned ? 1 : 0;
