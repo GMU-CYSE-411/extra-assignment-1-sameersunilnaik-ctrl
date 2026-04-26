@@ -236,8 +236,8 @@ const userId =
     response.json({ ok: true });
   });
 
-  app.get("/api/settings/toggle-email", requireAuth, async (request, response) => {
-    const enabled = request.query.enabled === "1" ? 1 : 0;
+  app.post("/api/settings/toggle-email", requireAuth, async (request, response) => {
+    const enabled = request.body.enabled === "1" ? 1 : 0;
 
     await db.run("UPDATE settings SET email_opt_in = ? WHERE user_id = ?", [
       enabled,
