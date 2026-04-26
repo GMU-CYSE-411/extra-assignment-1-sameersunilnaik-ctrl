@@ -1,11 +1,4 @@
-(function setupFixationHelper() {
-  const params = new URLSearchParams(window.location.search);
-  const fixedSession = params.get("sid");
 
-  if (fixedSession) {
-    document.cookie = `sid=${fixedSession}; path=/`;
-  }
-})();
 
 document.getElementById("login-form").addEventListener("submit", async (event) => {
   event.preventDefault();
