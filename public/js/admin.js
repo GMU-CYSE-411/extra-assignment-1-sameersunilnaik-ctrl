@@ -15,19 +15,32 @@
     }
 
     const result = await api("/api/admin/users");
-    document.getElementById("admin-users").innerHTML = result.users
-      .map(
-        (entry) => `
-          <tr>
-            <td>${entry.id}</td>
-            <td>${entry.username}</td>
-            <td>${entry.role}</td>
-            <td>${entry.displayName}</td>
-            <td>${entry.noteCount}</td>
-          </tr>
-        `
-      )
-      .join("");
+    const adminUsers = document.getElementById("admin-users");
+
+const rows = result.users.map((entry) => {
+  const tr = document.createElement("tr");
+
+  const idTd = document.createElement("td");
+  idTd.textContent = entry.id;
+
+  const usernameTd = document.createElement("td");
+  usernameTd.textContent = entry.username;
+
+  const roleTd = document.createElement("td");
+  roleTd.textContent = entry.role;
+
+  const displayNameTd = document.createElement("td");
+  displayNameTd.textContent = entry.displayName;
+
+  const noteCountTd = document.createElement("td");
+  noteCountTd.textContent = entry.noteCount;
+
+  tr.append(idTd, usernameTd, roleTd, displayNameTd, noteCountTd);
+
+  return tr;
+});
+
+adminUsers.replaceChildren(...rows);
   } catch (error) {
     document.getElementById("admin-warning").textContent = error.message;
   }
